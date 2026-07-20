@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}Cadastro — Minhas Finanças{% endblock %}
+{% block conteudo %}
+<div class="cartao-auth">
+  <div class="auth-logo">💰</div>
+  <h1>Criar conta</h1>
+  <p class="subtitulo">Leva menos de um minuto</p>
+
+  <form method="POST" class="formulario">
+    <label>Nome
+      <input type="text" name="nome" required autocomplete="name" placeholder="Seu nome">
+    </label>
+    <label>E-mail
+      <input type="email" name="email" required autocomplete="email" placeholder="voce@email.com">
+    </label>
+    <label>Senha
+      <input type="password" name="senha" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+    </label>
+    <button type="submit" class="botao botao-primario">Criar conta</button>
+  </form>
+
+  <p class="auth-rodape">Já tem conta? <a href="{{ url_for('login') }}">Entrar</a></p>
+</div>
+{% endblock %}

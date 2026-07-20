@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{% block titulo %}Minhas Finanças{% endblock %}</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Gestão financeira pessoal: receitas, gastos e dívidas parceladas.">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  {% if session.get('user_id') %}
+  <header class="topo">
+    <div class="topo-conteudo">
+      <span class="logo">💰 Minhas Finanças</span>
+      <nav class="nav-desktop">
+        <a href="{{ url_for('dashboard') }}" class="{{ 'ativo' if request.endpoint == 'dashboard' }}">Dashboard</a>
+        <a href="{{ url_for('transacoes') }}" class="{{ 'ativo' if request.endpoint == 'transacoes' }}">Movimentações</a>
+        <a href="{{ url_for('dividas') }}" class="{{ 'ativo' if request.endpoint == 'dividas' }}">Dívidas</a>
+        <a href="{{ url_for('sair') }}" class="sair">Sair</a>
+      </nav>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="conteudo {% if not session.get('user_id') %}conteudo-auth{% endif %}">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+        <div class="flashes">
+          {% for categoria, msg in mensagens %}
+            <div class="flash flash-{{ categoria }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  {% if session.get('user_id') %}
+  <nav class="nav-mobile">
+    <a href="{{ url_for('dashboard') }}" class="{{ 'ativo' if request.endpoint == 'dashboard' }}">
+      <span class="icone">📊</span><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('transacoes') }}" class="{{ 'ativo' if request.endpoint == 'transacoes' }}">
+      <span class="icone">💸</span><span>Movimentações</span>
+    </a>
+    <a href="{{ url_for('dividas') }}" class="{{ 'ativo' if request.endpoint == 'dividas' }}">
+      <span class="icone">📋</span><span>Dívidas</span>
+    </a>
+  </nav>
+  {% endif %}
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

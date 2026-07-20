@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block titulo %}Dashboard — Minhas Finanças{% endblock %}
+{% block conteudo %}
+<h1 class="titulo-pagina">Olá, {{ usuario.nome.split(' ')[0] }} 👋</h1>
+<p class="subtitulo-pagina">Resumo de {{ nome_mes }}/{{ hoje.year }}</p>
+
+<section class="cards">
+  <div class="card card-receita">
+    <span class="card-rotulo">Receitas do mês</span>
+    <span class="card-valor">{{ mes.receitas | moeda }}</span>
+  </div>
+  <div class="card card-despesa">
+    <span class="card-rotulo">Gastos do mês</span>
+    <span class="card-valor">{{ mes.despesas_total | moeda }}</span>
+    {% if mes.parcelas > 0 %}
+    <span class="card-detalhe">inclui {{ mes.parcelas | moeda }} em parcelas</span>
+    {% endif %}
+  </div>
+  <div class="card {{ 'card-receita' if mes.saldo >= 0 else 'card-despesa' }}">
+    <span class="card-rotulo">Saldo do mês</span>
+    <span class="card-valor">{{ mes.saldo | moeda }}</span>
+  </div>
+</section>
+
+<section class="cards cards-ano">
+  <div class="card">
+    <span class="card-rotulo">Receitas em {{ hoje.year }}</span>
+    <span class="card-valor valor-menor">{{ ano.receitas | moeda }}</span>
+  </div>
+  <div class="card">
+    <span class="card-rotulo">Gastos em {{ hoje.year }}</span>
+    <span class="card-valor valor-menor">{{ ano.despesas_total | moeda }}</span>
+  </div>
+  <div class="card">
+    <span class="card-rotulo">Saldo em {{ hoje.year }}</span>
+    <span class="card-valor valor-menor">{{ ano.saldo | moeda }}</span>
+  </div>
+</section>
+
+<section class="painel">
+  <div class="painel-cabecalho">
+    <h2>Receitas × Gastos por mês</h2>
+    <select id="seletor-ano" class="seletor">
+      {% for a in range(hoje.year - 2, hoje.year + 1) %}
+      <option value="{{ a }}" {{ 'selected' if a == hoje.year }}>{{ a }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="grafico-container">
+    <canvas id="grafico" height="260"></canvas>
+  </div>
+  <div class="legenda">
+    <span><i class="ponto ponto-receita"></i> Receitas</span>
+    <span><i class="ponto ponto-despesa"></i> Gastos (com parcelas)</span>
+  </div>
+</section>
+
+{% if parcelas_mes %}
+<section class="painel">
+  <h2>Parcelas deste mês</h2>
+  <ul class="lista">
+    {% for p in parcelas_mes %}
+    <li class="lista-item">
+      <div>
+        <strong>{{ p.divida.descricao }}</strong>
+        <span class="lista-detalhe">Parcela {{ p.numero }}/{{ p.divida.num_parcelas }}</span>
+      </div>
+      <span class="valor-negativo">{{ p.valor | moeda }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="painel">
+  <div class="painel-cabecalho">
+    <h2>Últimas movimentações</h2>
+    <a href="{{ url_for('transacoes') }}" class="link-suave">ver todas</a>
+  </div>
+  {% if ultimas %}
+  <ul class="lista">
+    {% for t in ultimas %}
+    <li class="lista-item">
+      <div>
+        <strong>{{ t.descricao }}</strong>
+        <span class="lista-detalhe">{{ t.categoria }} · {{ t.data | data_br }}</span>
+      </div>
+      <span class="{{ 'valor-positivo' if t.tipo == 'receita' else 'valor-negativo' }}">
+        {{ '+' if t.tipo == 'receita' else '−' }} {{ t.valor | moeda }}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="vazio">Nenhuma movimentação ainda. <a href="{{ url_for('transacoes') }}">Registre a primeira!</a></p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/grafico.js') }}"></script>
+{% endblock %}

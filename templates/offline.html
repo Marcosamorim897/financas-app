@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Sem conexão — Minhas Finanças{% endblock %}
+{% block conteudo %}
+<div class="cartao-auth">
+  <div class="auth-logo">📡</div>
+  <h1>Você está offline</h1>
+  <p class="subtitulo">Conecte-se à internet para acessar suas finanças.</p>
+  <button class="botao botao-primario" onclick="location.reload()">Tentar novamente</button>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Dívidas — Minhas Finanças{% endblock %}
+{% block conteudo %}
+<h1 class="titulo-pagina">Dívidas parceladas</h1>
+<p class="subtitulo-pagina">Compras parceladas, financiamentos e crediários</p>
+
+<section class="painel">
+  <h2>Nova dívida</h2>
+  <form method="POST" class="formulario formulario-grade">
+    <label>Descrição
+      <input type="text" name="descricao" required placeholder="Ex: Notebook em 10x">
+    </label>
+    <label>Valor total (R$)
+      <input type="text" name="valor_total" required inputmode="decimal" placeholder="0,00">
+    </label>
+    <label>Número de parcelas
+      <input type="number" name="num_parcelas" required min="1" max="360" placeholder="Ex: 10">
+    </label>
+    <label>Vencimento da 1ª parcela
+      <input type="date" name="data_primeira_parcela" value="{{ hoje.isoformat() }}" required>
+    </label>
+    <button type="submit" class="botao botao-primario">Cadastrar dívida</button>
+  </form>
+</section>
+
+<section class="painel">
+  <h2>Minhas dívidas</h2>
+  {% if dividas %}
+  <ul class="lista">
+    {% for d in dividas %}
+    <li class="lista-item lista-item-divida {{ 'divida-quitada' if d.quitada }}">
+      <div class="divida-info">
+        <strong>{{ d.descricao }} {% if d.quitada %}✅{% endif %}</strong>
+        <span class="lista-detalhe">
+          {{ d.valor_parcela | moeda }}/mês · {{ d.parcelas_pagas }}/{{ d.num_parcelas }} pagas
+          · 1ª em {{ d.data_primeira_parcela | data_br }}
+        </span>
+        <div class="progresso">
+          <div class="progresso-barra" style="width: {{ (d.parcelas_pagas / d.num_parcelas * 100) | round }}%"></div>
+        </div>
+        <span class="lista-detalhe">
+          Total: {{ d.valor_total | moeda }}
+          {% if not d.quitada %} · Restam {{ d.valor_restante | moeda }}{% endif %}
+        </span>
+      </div>
+      <div class="lista-acoes lista-acoes-coluna">
+        {% if not d.quitada %}
+        <form method="POST" action="{{ url_for('pagar_parcela', divida_id=d.id) }}">
+          <button type="submit" class="botao botao-pequeno">Pagar parcela</button>
+        </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('excluir_divida', divida_id=d.id) }}"
+              onsubmit="return confirm('Excluir esta dívida?')">
+          <button type="submit" class="botao-icone" title="Excluir">🗑️</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="vazio">Nenhuma dívida cadastrada. Que continue assim! 🎉</p>
+  {% endif %}
+</section>
+{% endblock %}

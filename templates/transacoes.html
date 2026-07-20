@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block titulo %}Movimentações — Minhas Finanças{% endblock %}
+{% block conteudo %}
+<h1 class="titulo-pagina">Movimentações</h1>
+<p class="subtitulo-pagina">Registre suas receitas e gastos</p>
+
+<section class="painel">
+  <h2>Nova movimentação</h2>
+  <form method="POST" class="formulario formulario-grade">
+    <div class="alternador">
+      <label class="alternador-opcao">
+        <input type="radio" name="tipo" value="despesa" checked>
+        <span>💸 Gasto</span>
+      </label>
+      <label class="alternador-opcao">
+        <input type="radio" name="tipo" value="receita">
+        <span>💰 Receita</span>
+      </label>
+    </div>
+    <label>Descrição
+      <input type="text" name="descricao" required placeholder="Ex: Supermercado">
+    </label>
+    <label>Valor (R$)
+      <input type="text" name="valor" required inputmode="decimal" placeholder="0,00">
+    </label>
+    <label>Categoria
+      <select name="categoria" id="categoria">
+        {% for c in categorias_despesa %}
+        <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Data
+      <input type="date" name="data" value="{{ hoje.isoformat() }}" required>
+    </label>
+    <button type="submit" class="botao botao-primario">Adicionar</button>
+  </form>
+</section>
+
+<section class="painel">
+  <h2>Histórico</h2>
+  {% if transacoes %}
+  <ul class="lista">
+    {% for t in transacoes %}
+    <li class="lista-item">
+      <div>
+        <strong>{{ t.descricao }}</strong>
+        <span class="lista-detalhe">{{ t.categoria }} · {{ t.data | data_br }}</span>
+      </div>
+      <div class="lista-acoes">
+        <span class="{{ 'valor-positivo' if t.tipo == 'receita' else 'valor-negativo' }}">
+          {{ '+' if t.tipo == 'receita' else '−' }} {{ t.valor | moeda }}
+        </span>
+        <form method="POST" action="{{ url_for('excluir_transacao', transacao_id=t.id) }}"
+              onsubmit="return confirm('Excluir esta movimentação?')">
+          <button type="submit" class="botao-icone" title="Excluir">🗑️</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="vazio">Nenhuma movimentação registrada ainda.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const categoriasDespesa = {{ categorias_despesa | tojson }};
+  const categoriasReceita = {{ categorias_receita | tojson }};
+  const seletorCategoria = document.getElementById('categoria');
+
+  document.querySelectorAll('input[name="tipo"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const lista = radio.value === 'receita' ? categoriasReceita : categoriasDespesa;
+      seletorCategoria.innerHTML = lista.map(c => `<option value="${c}">${c}</option>`).join('');
+    });
+  });
+</script>
+{% endblock %}
