@@ -22,6 +22,7 @@
         <a href="{{ url_for('dashboard') }}" class="{{ 'ativo' if request.endpoint == 'dashboard' }}">Dashboard</a>
         <a href="{{ url_for('transacoes') }}" class="{{ 'ativo' if request.endpoint == 'transacoes' }}">Movimentações</a>
         <a href="{{ url_for('dividas') }}" class="{{ 'ativo' if request.endpoint == 'dividas' }}">Dívidas</a>
+        <a href="{{ url_for('metas') }}" class="{{ 'ativo' if request.endpoint == 'metas' }}">Metas</a>
         <a href="{{ url_for('sair') }}" class="sair">Sair</a>
       </nav>
     </div>
@@ -51,6 +52,9 @@
     </a>
     <a href="{{ url_for('dividas') }}" class="{{ 'ativo' if request.endpoint == 'dividas' }}">
       <span class="icone">📋</span><span>Dívidas</span>
+    </a>
+    <a href="{{ url_for('metas') }}" class="{{ 'ativo' if request.endpoint == 'metas' }}">
+      <span class="icone">🎯</span><span>Metas</span>
     </a>
   </nav>
   {% endif %}

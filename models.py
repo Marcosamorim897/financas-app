@@ -22,6 +22,9 @@ class Usuario(db.Model):
     dividas = db.relationship(
         "Divida", backref="usuario", lazy=True, cascade="all, delete-orphan"
     )
+    metas = db.relationship(
+        "Meta", backref="usuario", lazy=True, cascade="all, delete-orphan"
+    )
 
 
 class Transacao(db.Model):
@@ -75,3 +78,70 @@ class Divida(db.Model):
         if 0 <= idx < self.num_parcelas:
             return self.valor_parcela
         return Decimal("0")
+
+
+class Meta(db.Model):
+    __tablename__ = "metas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("usuarios.id"), nullable=False, index=True
+    )
+    nome = db.Column(db.String(200), nullable=False)
+    valor_alvo = db.Column(db.Numeric(12, 2), nullable=False)
+    data_prevista = db.Column(db.Date, nullable=False)
+
+    movimentos = db.relationship(
+        "MovimentoMeta",
+        backref="meta",
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="MovimentoMeta.data.desc(), MovimentoMeta.id.desc()",
+    )
+
+    @property
+    def valor_captado(self) -> Decimal:
+        total = Decimal("0")
+        for m in self.movimentos:
+            if m.tipo == "aporte":
+                total += Decimal(m.valor)
+            else:
+                total -= Decimal(m.valor)
+        return total.quantize(CENTAVOS)
+
+    @property
+    def valor_restante(self) -> Decimal:
+        restante = Decimal(self.valor_alvo) - self.valor_captado
+        return restante.quantize(CENTAVOS) if restante > 0 else Decimal("0.00")
+
+    @property
+    def percentual(self) -> float:
+        if not self.valor_alvo:
+            return 0.0
+        return float(self.valor_captado / Decimal(self.valor_alvo) * 100)
+
+    @property
+    def concluida(self) -> bool:
+        return self.valor_captado >= Decimal(self.valor_alvo)
+
+    def meses_restantes(self, hoje: date) -> int:
+        return (self.data_prevista.year - hoje.year) * 12 + (
+            self.data_prevista.month - hoje.month
+        )
+
+    def aporte_mensal_sugerido(self, hoje: date) -> Decimal:
+        """Quanto guardar por mês para chegar ao alvo até a data prevista."""
+        meses = max(self.meses_restantes(hoje), 1)
+        return (self.valor_restante / meses).quantize(CENTAVOS)
+
+
+class MovimentoMeta(db.Model):
+    __tablename__ = "movimentos_meta"
+
+    id = db.Column(db.Integer, primary_key=True)
+    meta_id = db.Column(
+        db.Integer, db.ForeignKey("metas.id"), nullable=False, index=True
+    )
+    tipo = db.Column(db.String(10), nullable=False)  # "aporte" ou "retirada"
+    valor = db.Column(db.Numeric(12, 2), nullable=False)
+    data = db.Column(db.Date, nullable=False, default=date.today)

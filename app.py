@@ -16,7 +16,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from models import Divida, Transacao, Usuario, db
+from models import Divida, Meta, MovimentoMeta, Transacao, Usuario, db
 
 MESES_ABREV = [
     "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -396,6 +396,99 @@ def excluir_divida(divida_id):
     db.session.commit()
     flash("Dívida excluída.", "ok")
     return redirect(url_for("dividas"))
+
+
+# ---------------------------------------------------------------- metas
+
+
+@app.route("/metas", methods=["GET", "POST"])
+@login_obrigatorio
+def metas():
+    usuario = usuario_atual()
+    hoje = date.today()
+
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        valor_alvo = parse_valor(request.form.get("valor_alvo"))
+        data_prevista = parse_data(request.form.get("data_prevista"))
+
+        if not nome or valor_alvo is None or not data_prevista:
+            flash("Preencha nome, valor e data de previsão corretamente.", "erro")
+        elif data_prevista <= hoje:
+            flash("A data de previsão precisa ser uma data futura.", "erro")
+        else:
+            db.session.add(
+                Meta(
+                    user_id=usuario.id,
+                    nome=nome,
+                    valor_alvo=valor_alvo,
+                    data_prevista=data_prevista,
+                )
+            )
+            db.session.commit()
+            flash("Meta criada! Bora guardar dinheiro. 🎯", "ok")
+        return redirect(url_for("metas"))
+
+    lista = (
+        Meta.query.filter_by(user_id=usuario.id)
+        .order_by(Meta.data_prevista.asc())
+        .all()
+    )
+    # metas em andamento primeiro, concluídas por último
+    lista.sort(key=lambda m: m.concluida)
+    return render_template("metas.html", usuario=usuario, metas=lista, hoje=hoje)
+
+
+@app.route("/metas/<int:meta_id>/movimentar", methods=["POST"])
+@login_obrigatorio
+def movimentar_meta(meta_id):
+    meta = Meta.query.filter_by(id=meta_id, user_id=session["user_id"]).first_or_404()
+    tipo = request.form.get("tipo")
+    valor = parse_valor(request.form.get("valor"))
+
+    if tipo not in ("aporte", "retirada") or valor is None:
+        flash("Informe um valor válido maior que zero.", "erro")
+    elif tipo == "retirada" and valor > meta.valor_captado:
+        flash(
+            f"A retirada não pode ser maior que o valor guardado "
+            f"({filtro_moeda(meta.valor_captado)}).",
+            "erro",
+        )
+    else:
+        db.session.add(MovimentoMeta(meta_id=meta.id, tipo=tipo, valor=valor))
+        db.session.commit()
+        if tipo == "aporte" and meta.concluida:
+            flash(f'Meta "{meta.nome}" alcançada! 🎉', "ok")
+        elif tipo == "aporte":
+            flash("Valor adicionado à meta!", "ok")
+        else:
+            flash("Valor retirado da meta.", "ok")
+    return redirect(url_for("metas"))
+
+
+@app.route(
+    "/metas/<int:meta_id>/movimentos/<int:movimento_id>/excluir", methods=["POST"]
+)
+@login_obrigatorio
+def excluir_movimento_meta(meta_id, movimento_id):
+    meta = Meta.query.filter_by(id=meta_id, user_id=session["user_id"]).first_or_404()
+    movimento = MovimentoMeta.query.filter_by(
+        id=movimento_id, meta_id=meta.id
+    ).first_or_404()
+    db.session.delete(movimento)
+    db.session.commit()
+    flash("Movimento removido.", "ok")
+    return redirect(url_for("metas"))
+
+
+@app.route("/metas/<int:meta_id>/excluir", methods=["POST"])
+@login_obrigatorio
+def excluir_meta(meta_id):
+    meta = Meta.query.filter_by(id=meta_id, user_id=session["user_id"]).first_or_404()
+    db.session.delete(meta)
+    db.session.commit()
+    flash("Meta excluída.", "ok")
+    return redirect(url_for("metas"))
 
 
 if __name__ == "__main__":

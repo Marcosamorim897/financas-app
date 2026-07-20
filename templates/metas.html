@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block titulo %}Metas — Minhas Finanças{% endblock %}
+{% block conteudo %}
+<h1 class="titulo-pagina">Metas</h1>
+<p class="subtitulo-pagina">Objetivos financeiros: viagem, reserva de emergência, carro novo…</p>
+
+<section class="painel">
+  <h2>Nova meta</h2>
+  <form method="POST" class="formulario formulario-grade">
+    <label>Qual é a meta?
+      <input type="text" name="nome" required placeholder="Ex: Viagem para a praia">
+    </label>
+    <label>Valor da meta (R$)
+      <input type="text" name="valor_alvo" required inputmode="decimal" placeholder="0,00">
+    </label>
+    <label>Previsão para alcançar
+      <input type="date" name="data_prevista" min="{{ hoje.isoformat() }}" required>
+    </label>
+    <button type="submit" class="botao botao-primario">Criar meta</button>
+  </form>
+</section>
+
+{% if metas %}
+{% for m in metas %}
+<section class="painel painel-meta {{ 'meta-concluida' if m.concluida }}">
+  <div class="meta-cabecalho">
+    <div>
+      <h2>{{ m.nome }} {% if m.concluida %}🏆{% endif %}</h2>
+      <span class="lista-detalhe">
+        Previsão: {{ m.data_prevista | data_br }}
+        {% if not m.concluida %}
+          {% set meses = m.meses_restantes(hoje) %}
+          {% if meses > 0 %}
+            · guarde {{ m.aporte_mensal_sugerido(hoje) | moeda }}/mês para chegar lá
+          {% else %}
+            · prazo vencido — que tal ajustar a data?
+          {% endif %}
+        {% endif %}
+      </span>
+    </div>
+    <form method="POST" action="{{ url_for('excluir_meta', meta_id=m.id) }}"
+          onsubmit="return confirm('Excluir esta meta e todo o histórico?')">
+      <button type="submit" class="botao-icone" title="Excluir meta">🗑️</button>
+    </form>
+  </div>
+
+  <div class="meta-corpo">
+    <div class="meta-grafico">
+      <canvas class="grafico-meta" width="150" height="150"
+              data-captado="{{ m.valor_captado }}" data-alvo="{{ m.valor_alvo }}"></canvas>
+    </div>
+    <div class="meta-numeros">
+      <div class="meta-numero">
+        <span class="card-rotulo">Guardado</span>
+        <span class="valor-positivo">{{ m.valor_captado | moeda }}</span>
+      </div>
+      <div class="meta-numero">
+        <span class="card-rotulo">Meta</span>
+        <span>{{ m.valor_alvo | moeda }}</span>
+      </div>
+      <div class="meta-numero">
+        <span class="card-rotulo">Falta</span>
+        <span class="{{ 'valor-positivo' if m.concluida }}">
+          {{ 'Concluída! 🎉' if m.concluida else (m.valor_restante | moeda) }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('movimentar_meta', meta_id=m.id) }}"
+        class="formulario meta-movimentar">
+    <div class="alternador">
+      <label class="alternador-opcao">
+        <input type="radio" name="tipo" value="aporte" checked>
+        <span>➕ Adicionar</span>
+      </label>
+      <label class="alternador-opcao">
+        <input type="radio" name="tipo" value="retirada">
+        <span>➖ Retirar</span>
+      </label>
+    </div>
+    <div class="meta-movimentar-linha">
+      <input type="text" name="valor" required inputmode="decimal" placeholder="0,00" aria-label="Valor">
+      <button type="submit" class="botao botao-primario">Salvar</button>
+    </div>
+  </form>
+
+  {% if m.movimentos %}
+  <details class="meta-historico">
+    <summary>Histórico ({{ m.movimentos | length }})</summary>
+    <ul class="lista">
+      {% for mov in m.movimentos %}
+      <li class="lista-item">
+        <div>
+          <strong>{{ '➕ Aporte' if mov.tipo == 'aporte' else '➖ Retirada' }}</strong>
+          <span class="lista-detalhe">{{ mov.data | data_br }}</span>
+        </div>
+        <div class="lista-acoes">
+          <span class="{{ 'valor-positivo' if mov.tipo == 'aporte' else 'valor-negativo' }}">
+            {{ '+' if mov.tipo == 'aporte' else '−' }} {{ mov.valor | moeda }}
+          </span>
+          <form method="POST"
+                action="{{ url_for('excluir_movimento_meta', meta_id=m.id, movimento_id=mov.id) }}"
+                onsubmit="return confirm('Remover este movimento?')">
+            <button type="submit" class="botao-icone" title="Remover">🗑️</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</section>
+{% endfor %}
+{% else %}
+<section class="painel">
+  <p class="vazio">Nenhuma meta ainda. Crie a primeira e comece a guardar! 🎯</p>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/metas.js') }}"></script>
+{% endblock %}

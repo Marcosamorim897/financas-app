@@ -303,6 +303,47 @@ a { color: var(--primaria); }
   transition: width 0.3s;
 }
 
+/* ---------- metas ---------- */
+.meta-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.meta-cabecalho h2 { margin-bottom: 2px; }
+.meta-concluida { border-color: var(--primaria); }
+.meta-corpo {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+.meta-grafico { flex-shrink: 0; }
+.meta-numeros {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.meta-numero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.meta-movimentar { gap: 10px; }
+.meta-movimentar-linha { display: flex; gap: 10px; }
+.meta-movimentar-linha input { flex: 1; min-width: 0; }
+.meta-historico { margin-top: 14px; }
+.meta-historico summary {
+  cursor: pointer;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+.meta-historico summary:hover { color: var(--texto); }
+
 /* ---------- navegação mobile ---------- */
 .nav-mobile {
   display: none;
@@ -337,4 +378,6 @@ a { color: var(--primaria); }
   .cards-ano .card-valor { font-size: 0.95rem; }
   .formulario-grade { grid-template-columns: 1fr; }
   .conteudo { padding-bottom: 90px; }
+  .meta-corpo { flex-direction: column; gap: 14px; }
+  .meta-numeros { width: 100%; text-align: center; }
 }
