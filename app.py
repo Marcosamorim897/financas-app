@@ -40,6 +40,11 @@ def criar_app():
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Evita erro 500 quando o banco fecha conexões ociosas
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
     db.init_app(app)
     with app.app_context():
@@ -126,6 +131,16 @@ def filtro_moeda(valor):
 @app.template_filter("data_br")
 def filtro_data_br(d):
     return d.strftime("%d/%m/%Y") if d else ""
+
+
+# ---------------------------------------------------------------- saúde
+
+
+@app.route("/saude")
+def saude():
+    """Ping do cron-job.org: mantém o Render acordado e valida o banco."""
+    db.session.execute(db.text("SELECT 1"))
+    return {"status": "ok"}
 
 
 # ---------------------------------------------------------------- PWA
