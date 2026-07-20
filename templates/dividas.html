@@ -7,18 +7,29 @@
 <section class="painel">
   <h2>Nova dívida</h2>
   <form method="POST" class="formulario formulario-grade">
+    <div class="alternador">
+      <label class="alternador-opcao">
+        <input type="radio" name="modo_valor" value="parcela" checked>
+        <span>💵 Valor da parcela</span>
+      </label>
+      <label class="alternador-opcao">
+        <input type="radio" name="modo_valor" value="total">
+        <span>🧾 Valor total</span>
+      </label>
+    </div>
     <label>Descrição
       <input type="text" name="descricao" required placeholder="Ex: Notebook em 10x">
     </label>
-    <label>Valor total (R$)
-      <input type="text" name="valor_total" required inputmode="decimal" placeholder="0,00">
+    <label><span id="rotulo-valor">Valor da parcela (R$)</span>
+      <input type="text" name="valor" id="campo-valor" required inputmode="decimal" placeholder="0,00">
     </label>
     <label>Número de parcelas
-      <input type="number" name="num_parcelas" required min="1" max="360" placeholder="Ex: 10">
+      <input type="number" name="num_parcelas" id="campo-parcelas" required min="1" max="360" placeholder="Ex: 10">
     </label>
     <label>Vencimento da 1ª parcela
       <input type="date" name="data_primeira_parcela" value="{{ hoje.isoformat() }}" required>
     </label>
+    <p class="previa-calculo" id="previa-calculo"></p>
     <button type="submit" class="botao botao-primario">Cadastrar dívida</button>
   </form>
 </section>
@@ -61,4 +72,52 @@
   <p class="vazio">Nenhuma dívida cadastrada. Que continue assim! 🎉</p>
   {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const rotuloValor = document.getElementById('rotulo-valor');
+  const campoValor = document.getElementById('campo-valor');
+  const campoParcelas = document.getElementById('campo-parcelas');
+  const previa = document.getElementById('previa-calculo');
+
+  function modoAtual() {
+    return document.querySelector('input[name="modo_valor"]:checked').value;
+  }
+
+  function parseValorBr(texto) {
+    texto = (texto || '').trim();
+    if (texto.includes(',')) texto = texto.replace(/\./g, '').replace(',', '.');
+    const v = parseFloat(texto);
+    return isNaN(v) || v <= 0 ? null : v;
+  }
+
+  function moeda(v) {
+    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  function atualizarPrevia() {
+    const valor = parseValorBr(campoValor.value);
+    const n = parseInt(campoParcelas.value, 10);
+    if (!valor || !n || n < 1) {
+      previa.textContent = '';
+      return;
+    }
+    if (modoAtual() === 'parcela') {
+      previa.textContent = `${n}x de ${moeda(valor)} = total de ${moeda(valor * n)}`;
+    } else {
+      previa.textContent = `Total de ${moeda(valor)} = ${n}x de ${moeda(valor / n)}`;
+    }
+  }
+
+  document.querySelectorAll('input[name="modo_valor"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      rotuloValor.textContent =
+        modoAtual() === 'parcela' ? 'Valor da parcela (R$)' : 'Valor total (R$)';
+      atualizarPrevia();
+    });
+  });
+  campoValor.addEventListener('input', atualizarPrevia);
+  campoParcelas.addEventListener('input', atualizarPrevia);
+</script>
 {% endblock %}

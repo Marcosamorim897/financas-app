@@ -332,16 +332,21 @@ def dividas():
 
     if request.method == "POST":
         descricao = request.form.get("descricao", "").strip()
-        valor_total = parse_valor(request.form.get("valor_total"))
+        modo = request.form.get("modo_valor", "total")
+        valor = parse_valor(request.form.get("valor"))
         data_inicio = parse_data(request.form.get("data_primeira_parcela"))
         try:
             num_parcelas = int(request.form.get("num_parcelas", "0"))
         except ValueError:
             num_parcelas = 0
 
-        if not descricao or valor_total is None or num_parcelas < 1 or not data_inicio:
+        if not descricao or valor is None or num_parcelas < 1 or not data_inicio:
             flash("Preencha todos os campos da dívida corretamente.", "erro")
         else:
+            if modo == "parcela":
+                valor_total = (valor * num_parcelas).quantize(Decimal("0.01"))
+            else:
+                valor_total = valor
             db.session.add(
                 Divida(
                     user_id=usuario.id,

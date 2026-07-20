@@ -1,5 +1,5 @@
 // Service worker do PWA Minhas Finanças
-const CACHE = 'financas-v1';
+const CACHE = 'financas-v2';
 const ARQUIVOS_ESTATICOS = [
   '/static/css/style.css',
   '/static/js/grafico.js',

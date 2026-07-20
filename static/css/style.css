@@ -127,6 +127,14 @@ a { color: var(--primaria); }
 .formulario-grade .alternador, .formulario-grade button { grid-column: 1 / -1; }
 .formulario-grade label:first-of-type { grid-column: 1 / -1; }
 
+.previa-calculo {
+  grid-column: 1 / -1;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  min-height: 1.2em;
+  margin: 0;
+}
+
 .alternador { display: flex; gap: 10px; }
 .alternador-opcao { flex: 1; }
 .alternador-opcao input { display: none; }
@@ -209,8 +217,39 @@ a { color: var(--primaria); }
 .painel-cabecalho h2 { margin-bottom: 0; }
 .link-suave { color: var(--texto-suave); font-size: 0.9rem; }
 
-.grafico-container { width: 100%; overflow-x: auto; }
+.grafico-container { width: 100%; overflow-x: auto; position: relative; }
 #grafico { width: 100%; }
+.grafico-tooltip {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+  z-index: 5;
+}
+.grafico-tooltip .tooltip-titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texto-suave);
+  margin-bottom: 2px;
+}
+.grafico-tooltip .tooltip-titulo i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.grafico-tooltip .tooltip-valor {
+  display: block;
+  font-weight: 700;
+  font-size: 1rem;
+}
 .legenda {
   display: flex;
   gap: 18px;
